@@ -1,0 +1,12 @@
+{
+  "name": "tisp-engine",
+  "version": "0.0.1",
+  "description": "Tisp language engine",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Artur Wojciechowski <are_are_@live.com>",
+  "license": "MIT"
+}
