@@ -14,7 +14,9 @@ Tesl is a scripting language embedded in JavaScript designed for creating reacti
     '(html.div 
       (html.b (state :key) " world!")
       (html.button "Change"
-        (dom.event :click (@ state :key "bye"))
+        (dom.listen :click (fun [e:Event]:void
+          '(@ state :key "bye")
+        ))
       )
     )
   )
