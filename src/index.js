@@ -2,7 +2,7 @@ const Predicates = require('./predicates.js')
 const DefaultTokenizerTable = require('./tokenizerTable.js')
 const { InputStream, Tokenizer, Parser, Context, standardLibraryExtension } = require('./engine.js')
 
-class Tisp {
+class Tesl {
   constructor(opts) {
     let options = opts || {}
 
@@ -26,5 +26,5 @@ class Tisp {
 }
 
 module.exports = {
-  Tisp, Predicates, DefaultTokenizerTable, InputStream, Tokenizer, Parser, Context, standardLibraryExtension
+  Tesl, Predicates, DefaultTokenizerTable, InputStream, Tokenizer, Parser, Context, standardLibraryExtension
 }
