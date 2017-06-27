@@ -160,8 +160,6 @@ class Parser {
         e = this.input.next()
       }
       
-      
-      
       if (e === null) break
       r.push(e)
     }
@@ -349,7 +347,7 @@ class Context {
       }
     } else if (command.type === 'identifier') {
       if (lastResort) {
-        throw new Error(`Command ${command.value} is not recognized.`)
+        throw new Error(`command ${command.value} is not recognized`)
       }
 
       return await this.executeExpression(node, true)
@@ -410,7 +408,7 @@ class Context {
         }
       }
     } else {
-      throw new Error(`${command.type} is not a command.`)
+      throw new Error(`${command.type} is not a command`)
     }
   }
 }
@@ -442,7 +440,7 @@ function standardLibraryExtension(context) {
         if (v.value in rootLib) {
           rootLib[v.value](context)
         } else {
-          throw new Error(`Library '${v.value}' not found.`)
+          throw new Error(`library '${v.value}' not found.`)
         }
       }
 
