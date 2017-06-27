@@ -24,7 +24,7 @@ let Predicates = module.exports = {
     return input === '>'
   },
   isIdentifierStart: (input) => {
-    return /[a-z_@.]/i.test(input)
+    return /[a-z_@.#]/i.test(input)
   },  
   isIdentifier: (input) => {
     return Predicates.isIdentifierStart(input) || '?!-<>=0123456789.'.indexOf(input) >= 0

@@ -28,8 +28,7 @@ Tesl has only few syntax structures:
 | `number` | `512`, `2.12` | There are no negative numbers. You need an appropriate command. |
 | `kind` | `:string` | Used in type declaration, but also as an atom or key. |
 | `arguments` | `[x:number y:number]` | Used mainly in function declaration. |
-| `command` | `(print 1337)` | Building block of the whole language. Executed immediately, from the most nested outwards. |
-| `block` | `'(print 1337)` | Like a command, but it isn't executed immediately, function can determine when to execute a block. |
+| `command` | `(print 1337)` | Building block of the whole language. Time of execution depends on the function outside.  |
 
 ## Usage
 Tesl doesn't come with a standard library, so you need to write one yourself or use the one created by me - `hello-tesl`.

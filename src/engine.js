@@ -231,7 +231,9 @@ class Parser {
     let r = this.parseUntil(this.isExpressionEnd.bind(this))
     return {
       type: 'expression',
-      body: r
+      body: r,
+      line: a.line,
+      column: a.column
     }
   }
   
@@ -244,8 +246,22 @@ class Parser {
   }
 }
 
+class TeslError extends Error {
+  constructor(node, e) {
+    super()
+    this.name = 'TeslError'
+    this.__count = (e.__count ? e.__count : 0) + 1
+    if (e.__count) {
+      this.message = `${node.body[0].value || node.body[0].type} (${node.line}:${node.column}):\n  ${e.message}`
+    } else {
+      this.message = `${node.body[0].value || node.body[0].type} (${node.line}:${node.column}):\n    ${e.message}`
+    }
+  }
+}
+
 class Context {
   constructor(parent) {
+    this.__name = 'none'
     this.parent = parent || null
     this.scope = {}
 
@@ -254,7 +270,7 @@ class Context {
     this.imports = {}
 
     this.__contexts = []
-    this.__name = 'none'
+    
   }
 
   getRoot() {
@@ -276,11 +292,11 @@ class Context {
     return c
   }
 
-  execute(node) { 
+  async execute(node) {
     if (node.type === 'expression') {
-      return this.executeExpression(node)
+      return await this.executeExpression(node)
     } else {
-      return this.returnValue(node)
+      return await this.returnValue(node)
     }
   }
 
@@ -308,38 +324,91 @@ class Context {
     return node
   }
 
-  executeExpression(node, lastResort = false) {
-    let commandContext = this.spawn()
-    let command = commandContext.execute(node.body[0])
+  async executeExpression(node, lastResort = false) {
+    let commandContext = this
+    let command = await commandContext.execute(node.body[0])
 
-    commandContext.__name = `cmd: ${node.body[0].value}`
+    let args = node.body.slice(1).map((n) => {
+      let res = (hValue) => {
+        let arCtx = commandContext.spawn(`${this.__name}/${node.body[0].type === 'identifier' ? node.body[0].value : node.body[0].type}`)
+        if (hValue) arCtx.scope['#'] = hValue
+        return arCtx.execute(n)
+      }
 
-    let args = node.body.slice(1).map(n => commandContext.execute(n))
+      res.__node = n
+
+      return res
+    })
 
     if (command.type === 'function') {
-      return command.value(this, ...args)
+      try {
+        return await command.value(this, ...args)
+      } catch (e) {
+        let er = new TeslError(node, e)
+        throw er
+      }
     } else if (command.type === 'identifier') {
       if (lastResort) {
         throw new Error(`Command ${command.value} is not recognized.`)
       }
 
-      if (command.value === '.') {
-        return {
-          type: 'void'
-        }
-      }
-
-      let lastResortValue = this.returnValue(command)
-      return this.executeExpression(node, true)
+      return await this.executeExpression(node, true)
     } else if (command.type === 'object') {
       let o = command
 
-      args.forEach(arg => {
+      for (let arg of args) {
+        let k = await arg()
         let v = o.value
-        o = v[arg.value]
-      })
+        o = v[k.value]
+      }
 
       return o
+    } else if (command.type === 'arguments') {
+      if (args.length < 1) {
+        throw new Error('expected at least return type :void, or a return type and function body')
+      }
+      
+      let types = command.value
+      let returnType = await args[0]()
+
+      if (args.length === 1 && returnType.value !== 'void') {
+        throw new Error('function without a body must have return type void')
+      }
+      
+      let blocks = args.slice(1)
+
+      return await {
+        type: 'function',
+        value: async (ctx, ...vargs) => {
+          let c = ctx.spawn(`${this.__name}/:function`)
+          if (vargs.length !== types.length) {
+            throw new Error('wrong number of arguments')
+          }
+
+          for (let [index, type] of types.entries()) {
+            let varg = await vargs[index]()
+            
+            if (type.valueType.value !== varg.type) {
+              throw new Error(`expected ${type.valueType.value}, but instead got ${varg.type}`)
+            }
+
+            c.scope[type.value.value] = varg
+          }
+
+          let result
+          for (let block of blocks) {
+            let n = block.__node
+
+            result = await c.execute(n)            
+          }
+
+          if (result.type !== returnType.value) {
+            throw new Error(`expected function to return ${returnType.value}, but instead got ${result.type}`)
+          }
+
+          return result
+        }
+      }
     } else {
       throw new Error(`${command.type} is not a command.`)
     }
@@ -347,18 +416,40 @@ class Context {
 }
 
 function standardLibraryExtension(context) {
+  context.scope['tesl'] = context.scope['.'] = {
+    type: 'function',
+    value: async function (ctx, ...blocks) {
+      let result = { type: 'void' }
+      for (let block of blocks) {
+        result = await block(result)
+      }
+
+      return {
+        type: 'void',
+        value: '.'
+      }
+    }
+  }
+
   context.scope['use'] = {
     type: 'function',
-    value: function (ctx, ...libs) {
+    value: async function (ctx, ...libs) {
       let rootLib = ctx.getRoot().__lib
 
-      libs.forEach(lib => {
-        if (lib.value in rootLib) {
-          rootLib[lib.value](context)
+      for (let lib of libs) {
+        let v = await lib()
+
+        if (v.value in rootLib) {
+          rootLib[v.value](context)
         } else {
-          throw new Error(`Library '${lib.value}' not found.`)
+          throw new Error(`Library '${v.value}' not found.`)
         }
-      })
+      }
+
+      return {
+        type: 'void',
+        value: 'use'
+      }
     }
   }
 }

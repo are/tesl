@@ -1,6 +1,6 @@
 {
   "name": "tesl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Typed, embedded, scripting language",
   "main": "src/index.js",
   "scripts": {
