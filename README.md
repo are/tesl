@@ -11,10 +11,12 @@ Tesl is a scripting language embedded in JavaScript designed for creating reacti
       :key "hello"
     )
 
-    '(html.div 
+    (html.div 
       (html.b (state :key) " world!")
       (html.button "Change"
-        (dom.event :click (@ state :key "bye"))
+        (dom.listen :click (fun [e:Event]:void
+          (@ state :key "bye")
+        ))
       )
     )
   )
@@ -22,13 +24,14 @@ Tesl is a scripting language embedded in JavaScript designed for creating reacti
 ```
 
 Tesl has only few syntax structures:
-| Name | Example | Notes |
-| ---- | ------- | ----------- |
-| `string` | `"hello world"` | String are only available using `"` double quotes. |
-| `number` | `512`, `2.12` | There are no negative numbers. You need an appropriate command. |
-| `kind` | `:string` | Used in type declaration, but also as an atom or key. |
-| `arguments` | `[x:number y:number]` | Used mainly in function declaration. |
-| `command` | `(print 1337)` | Building block of the whole language. Time of execution depends on the function outside.  |
+
+Name | Example | Notes |
+---- | ------- | ----------- |
+`string` | `"hello world"` | String are only available using `"` double quotes.
+`number` | `512`, `2.12` | There are no negative numbers. You need an appropriate command. 
+`kind` | `:string` | Used in type declaration, but also as an atom or key. 
+`arguments` | `[x:number y:number]` | Used mainly in function declaration. 
+`command` | `(print 1337)` | Building block of the whole language. Execution time depends on the function outside.
 
 ## Usage
 Tesl doesn't come with a standard library, so you need to write one yourself or use the one created by me - `hello-tesl`.
