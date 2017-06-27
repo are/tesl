@@ -92,7 +92,7 @@ module.exports = (Predicates) => ([
       t.readWhile(Predicates.isWhitespace)
       
       return {
-        type: 'type',
+        type: 'kind',
         value: t.readWhile(Predicates.isTypeDeclaration),
         line: t.input.line,
         column: t.input.column
